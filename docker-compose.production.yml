@@ -1,0 +1,38 @@
+version: '3.7'
+
+services:
+  backend:
+    container_name: backend_tbot
+    restart: always
+    build:
+      context: .
+      target: backend-production
+    command: npm run start:prod
+    env_file:
+      - ./.env
+    ports:
+      - ${SERVER_PORT:?err}:${SERVER_PORT:?err}
+    networks:
+      - app-backend-net-prod
+    depends_on:
+      - postgres
+
+  postgres:
+    container_name: postgres_tbot
+    image: postgres:${DB_VERSION:?err}
+    restart: always
+    networks:
+      - app-backend-net-prod
+    environment:
+      POSTGRES_PASSWORD: ${DB_PASSWORD:?err}
+      POSTGRES_USER: ${DB_USERNAME:?err}
+      POSTGRES_DB: ${DB_DATABASE_NAME:?err}
+      # The PG_DATA variable tells Postgres where it should keep all the Postgres-related data
+      PG_DATA: /var/lib/postgresql/data
+    ports:
+      - ${DB_HOST_PORT:?err}:5432
+    volumes:
+      - ./database:/var/lib/postgresql/data
+networks:
+  app-backend-net-prod:
+    driver: bridge

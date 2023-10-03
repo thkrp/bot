@@ -1,0 +1,1 @@
+Telegram bot generates random phrases from messages in a group chat.
