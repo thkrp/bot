@@ -1,0 +1,58 @@
+version: '3.7'
+
+services:
+  backend:
+    container_name: backend-bot
+    build:
+      context: .
+      target: backend-build
+    command: npm run start:dev
+    env_file:
+      - ./.env
+    volumes:
+      - ./:/usr/src/tbot
+      - /usr/src/tbot/node_modules
+    ports:
+      - ${SERVER_PORT:?err}:${SERVER_PORT:?err}
+    networks:
+      - app-backend-net
+    depends_on:
+      - postgres
+      - mongodb
+
+  postgres:
+    container_name: postgres-bot
+    image: postgres:${DB_VERSION:?err}
+    networks:
+      - app-backend-net
+    environment:
+      POSTGRES_PASSWORD: ${DB_PASSWORD:?err}
+      POSTGRES_USER: ${DB_USERNAME:?err}
+      PGUSER: ${DB_USERNAME:?err}
+      POSTGRES_DB: ${DB_DATABASE_NAME:?err}
+      # The PG_DATA variable tells Postgres where it should keep all the Postgres-related data
+      PG_DATA: /var/lib/postgresql/data
+    ports:
+      - ${DB_HOST_PORT:?err}:5432
+    volumes:
+      - ./database/postgres:/var/lib/postgresql/data
+
+  mongodb:
+    container_name: mongodb-bot
+    image: mongo:${DB_MONGO_VERSION:?err}
+    networks:
+      - app-backend-net
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: ${DB_MONGO_ROOT_USER:?err}
+      MONGO_INITDB_ROOT_PASSWORD: ${DB_MONGO_ROOT_PASSWORD:?err}
+      MONGO_INITDB_USERNAME: ${DB_MONGO_USERNAME:?err}
+      MONGO_INITDB_PASSWORD: ${DB_MONGO_PASSWORD:?err}
+      MONGO_INITDB_DATABASE: ${DB_MONGO_DATABASE_NAME:?err}
+    ports:
+      - ${DB_MONGO_HOST_PORT:?err}:27017
+    volumes:
+      - ./database/mongo:/data/db
+      - ./mongo-init.sh:/docker-entrypoint-initdb.d/mongo-init.sh:ro
+networks:
+  app-backend-net:
+    driver: bridge
